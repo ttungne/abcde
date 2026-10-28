@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CV Builder - Tạo CV Chuyên Nghiệp Cho Đội Ngũ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .section-card { transition: all 0.3s ease; }
+  .section-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .pop-in { animation: pop 0.3s ease; }
+  
+  .cv-wrapper { background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .cv-sidebar { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; }
+  .cv-sidebar h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.3); }
+  .cv-main h3 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: #1e3a8a; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #3b82f6; }
+  .skill-bar { background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; overflow: hidden; }
+  .skill-bar-fill { background: white; height: 100%; transition: width 0.5s; }
+  .cv-item { margin-bottom: 14px; }
+  .cv-item-title { font-weight: 600; font-size: 12px; color: #1e293b; }
+  .cv-item-sub { font-size: 11px; color: #64748b; font-style: italic; }
+  .cv-item-desc { font-size: 11px; color: #475569; margin-top: 4px; line-height: 1.5; }
+  
+  @media print {
+    body * { visibility: hidden; }
+    #cvPreview, #cvPreview * { visibility: visible; }
+    #cvPreview { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
+    .no-print { display: none !important; }
+  }
+  
+  .scroll-area { height: calc(100vh - 80px); overflow-y: auto; }
+  .scroll-area::-webkit-scrollbar { width: 6px; }
+  .scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  
+  input, textarea, select { transition: all 0.2s; }
+  input:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  
+  .profile-card { transition: all 0.25s ease; cursor: pointer; }
+  .profile-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+  .profile-card.active { ring: 2px; border-color: #3b82f6; }
+  
+  .avatar-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  .avatar-gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .avatar-gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .avatar-gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+  .avatar-gradient-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+  .avatar-gradient-6 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+  
+  .modal-backdrop {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+  }
+</style>
+</head>
+<body class="bg-slate-100">
+
+<!-- Header -->
+<header class="bg-white shadow-sm sticky top-0 z-40 no-print">
+  <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-400 rounded-lg flex items-center justify-center text-white">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800">CV Builder</h1>
+        <p class="text-xs text-slate-500">Tạo CV chuyên nghiệp cho đội ngũ</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btnDashboard" onclick="showDashboard()" class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+        <i class="fas fa-users mr-1"></i> <span id="profileCount">0</span> hồ sơ
+      </button>
+      <button id="btnEditor" onclick="showEditor()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg transition hidden">
+        <i class="fas fa-edit mr-1"></i> Chỉnh sửa
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ DASHBOARD VIEW ============ -->
+<div id="dashboardView" class="max-w-[1600px] mx-auto px-6 py-8">
+  
+  <!-- Welcome Banner -->
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 mb-6 text-white shadow-lg">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h2 class="text-2xl font-bold mb-2">👋 Quản lý hồ sơ CV</h2>
+        <p class="opacity-90 text-sm">Tạo và quản lý CV cho nhiều thành viên trong đội ngũ của bạn</p>
+      </div>
+      <div class="flex gap-2">
+        <label class="px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm cursor-pointer transition">
+          <i class="fas fa-file-import mr-1"></i> Nhập JSON
+          <input type="file" accept=".json" onchange="importProfile(event)" class="hidden"/>
+        </label>
+        <button onclick="createNewProfile()" class="px-5 py-2.5 bg-white text-blue-600 hover:bg-blue-50 rounded-lg text-sm font-semibold transition shadow-md">
+          <i class="fas fa-plus mr-1"></i> Tạo hồ sơ mới
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="mb-4 relative">
+    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+    <input id="searchInput" oninput="renderDashboard()" placeholder="Tìm kiếm theo tên, chức danh, email..." class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm shadow-sm"/>
+  </div>
+
+  <!-- Profile Grid -->
+  <div id="profileGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="hidden text-center py-16">
+    <div class="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-user-plus text-3xl text-slate-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-slate-700 mb-1">Chưa có hồ sơ nào</h3>
+    <p class="text-sm text-slate-500 mb-4">Bắt đầu tạo hồ sơ CV đầu tiên cho đội ngũ của bạn</p>
+    <button onclick="createNewProfile()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">
+      <i class="fas fa-plus mr-1"></i> Tạo hồ sơ đầu tiên
+    </button>
+  </div>
+</div>
+
+<!-- ============ EDITOR VIEW ============ -->
+<div id="editorView" class="hidden">
+  <div class="max-w-[1600px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- FORM SIDE -->
+    <div class="scroll-area no-print pr-2">
+      
+      <!-- Current Profile Header -->
+      <div class="bg-white rounded-xl p-4 mb-4 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div id="editorAvatar" class="w-12 h-12 rounded-full avatar-gradient flex items-center justify-center text-white font-bold"></div>
+          <div>
+            <h3 id="editorName" class="font-bold text-slate-800">Hồ sơ mới</h3>
+            <p id="editorTitle" class="text-xs text-slate-500">Đang chỉnh sửa</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportCurrentProfile()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">
+            <i class="fas fa-download mr-1"></i> Xuất JSON
+          </button>
+          <button onclick="loadSample()" class="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg">
+            <i class="fas fa-magic mr-1"></i> Dữ liệu mẫu
+          </button>
+        </div>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-user text-blue-500"></i>
+          <h2 class="font-bold text-slate-800">Thông tin cá nhân</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="text-xs font-medium text-slate-600">Họ và tên</label>
+            <input id="fullName" oninput="updateCV()" placeholder="Nguyễn Văn A" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Chức danh / Vị trí</label>
+            <input id="jobTitle" oninput="updateCV()" placeholder="Frontend Developer" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Ngày sinh</label>
+            <input id="dob" oninput="updateCV()" type="date" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Email</label>
+            <input id="email" oninput="updateCV()" type="email" placeholder="example@email.com" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Số điện thoại</label>
+            <input id="phone" oninput="updateCV()" placeholder="0912 345 678" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Địa chỉ</label>
+            <input id="address" oninput="updateCV()" placeholder="Hà Nội, Việt Nam" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Website / LinkedIn</label>
+            <input id="website" oninput="updateCV()" placeholder="linkedin.com/in/yourname" class="w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+          </div>
+          <div class="col-span-2">
+            <label class="text-xs font-medium text-slate-600">Ảnh đại diện (URL hoặc upload)</label>
+            <div class="flex gap-2 mt-1">
+              <input id="avatarUrl" oninput="updateCV()" placeholder="Dán link ảnh hoặc chọn file" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"/>
+              <label class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm cursor-pointer">
+                <i class="fas fa-upload"></i>
+                <input type="file" accept="image/*" onchange="handleAvatar(event)" class="hidden"/>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Objective -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-bullseye text-blue-500"></i>
+          <h2 class="font-bold text-slate-800">Mục tiêu nghề nghiệp</h2>
+        </div>
+        <textarea id="objective" oninput="updateCV()" rows="3" placeholder="Mô tả ngắn gọn mục tiêu và định hướng nghề nghiệp của bạn..." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
+      </div>
+
+      <!-- Experience -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-briefcase text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Kinh nghiệm làm việc</h2>
+          </div>
+          <button onclick="addExperience()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="experienceList" class="space-y-3"></div>
+      </div>
+
+      <!-- Education -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-graduation-cap text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Học vấn</h2>
+          </div>
+          <button onclick="addEducation()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="educationList" class="space-y-3"></div>
+      </div>
+
+      <!-- Skills -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-cogs text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Kỹ năng</h2>
+          </div>
+          <button onclick="addSkill()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="skillList" class="space-y-2"></div>
+      </div>
+
+      <!-- Projects -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-project-diagram text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Dự án</h2>
+          </div>
+          <button onclick="addProject()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="projectList" class="space-y-3"></div>
+      </div>
+
+      <!-- Languages -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-language text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Ngôn ngữ</h2>
+          </div>
+          <button onclick="addLanguage()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="languageList" class="space-y-2"></div>
+      </div>
+
+      <!-- Certificates -->
+      <div class="section-card bg-white rounded-xl p-6 mb-4 shadow-sm fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-certificate text-blue-500"></i>
+            <h2 class="font-bold text-slate-800">Chứng chỉ / Giải thưởng</h2>
+          </div>
+          <button onclick="addCertificate()" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg">
+            <i class="fas fa-plus mr-1"></i>Thêm
+          </button>
+        </div>
+        <div id="certificateList" class="space-y-2"></div>
+      </div>
+
+    </div>
+
+    <!-- CV PREVIEW -->
+    <div class="scroll-area">
+      <div class="sticky top-24">
+        <div id="cvPreview" class="cv-wrapper rounded-lg overflow-hidden" style="width: 100%; max-width: 800px; margin: 0 auto; aspect-ratio: 210/297;">
+          <div class="flex h-full" style="min-height: 1120px;">
+            
+            <!-- Sidebar -->
+            <div class="cv-sidebar p-6" style="width: 35%;">
+              <div class="text-center mb-6">
+                <div id="cvAvatar" class="w-28 h-28 mx-auto rounded-full bg-white/20 flex items-center justify-center text-4xl font-bold mb-3 overflow-hidden border-4 border-white/30">
+                  <i class="fas fa-user opacity-50"></i>
+                </div>
+                <h2 id="cvName" class="text-xl font-bold">Họ và tên</h2>
+                <p id="cvTitle" class="text-xs opacity-80 mt-1">Chức danh</p>
+              </div>
+
+              <div class="mb-5">
+                <h3><i class="fas fa-address-card mr-1"></i> Liên hệ</h3>
+                <div class="space-y-2 text-xs">
+                  <div id="cvEmail" class="flex items-start gap-2"><i class="fas fa-envelope mt-0.5 text-[10px]"></i><span class="break-all">email@example.com</span></div>
+                  <div id="cvPhone" class="flex items-start gap-2"><i class="fas fa-phone mt-0.5 text-[10px]"></i><span>0123 456 789</span></div>
+                  <div id="cvAddress" class="flex items-start gap-2"><i class="fas fa-map-marker-alt mt-0.5 text-[10px]"></i><span>Địa chỉ</span></div>
+                  <div id="cvWebsite" class="flex items-start gap-2 hidden"><i class="fas fa-globe mt-0.5 text-[10px]"></i><span class="break-all"></span></div>
+                  <div id="cvDob" class="flex items-start gap-2 hidden"><i class="fas fa-birthday-cake mt-0.5 text-[10px]"></i><span></span></div>
+                </div>
+              </div>
+
+              <div class="mb-5">
+                <h3><i class="fas fa-cogs mr-1"></i> Kỹ năng</h3>
+                <div id="cvSkills" class="space-y-2"></div>
+              </div>
+
+              <div class="mb-5">
+                <h3><i class="fas fa-language mr-1"></i> Ngôn ngữ</h3>
+                <div id="cvLanguages" class="space-y-2 text-xs"></div>
+              </div>
+
+              <div>
+                <h3><i class="fas fa-certificate mr-1"></i> Chứng chỉ</h3>
+                <div id="cvCertificates" class="space-y-2 text-xs"></div>
+              </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="cv-main p-6 flex-1">
+              
+              <div id="cvObjectiveSection" class="mb-5 hidden">
+                <h3><i class="fas fa-bullseye mr-1"></i> Mục tiêu nghề nghiệp</h3>
+                <p id="cvObjective" class="text-xs text-slate-600 leading-relaxed"></p>
+              </div>
+
+              <div id="cvExperienceSection" class="mb-5 hidden">
+                <h3><i class="fas fa-briefcase mr-1"></i> Kinh nghiệm làm việc</h3>
+                <div id="cvExperience" class="space-y-1"></div>
+              </div>
+
+              <div id="cvEducationSection" class="mb-5 hidden">
+                <h3><i class="fas fa-graduation-cap mr-1"></i> Học vấn</h3>
+                <div id="cvEducation" class="space-y-1"></div>
+              </div>
+
+              <div id="cvProjectsSection" class="mb-5 hidden">
+                <h3><i class="fas fa-project-diagram mr-1"></i> Dự án nổi bật</h3>
+                <div id="cvProjects" class="space-y-1"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-center gap-2 mt-4">
+          <button onclick="window.print()" class="px-5 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg transition shadow-md">
+            <i class="fas fa-download mr-1"></i> In / Lưu PDF
+          </button>
+          <button onclick="showDashboard()" class="px-5 py-2 text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition">
+            <i class="fas fa-arrow-left mr-1"></i> Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl p-6 max-w-sm w-full pop-in shadow-2xl">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+        <i class="fas fa-trash text-red-500"></i>
+      </div>
+      <h3 class="font-bold text-slate-800">Xóa hồ sơ?</h3>
+    </div>
+    <p class="text-sm text-slate-600 mb-5">Bạn có chắc chắn muốn xóa hồ sơ <strong id="deleteTargetName"></strong>? Hành động này không thể hoàn tác.</p>
+    <div class="flex gap-2 justify-end">
+      <button onclick="closeDeleteModal()" class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg">Hủy</button>
+      <button onclick="confirmDelete()" class="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-6 right-6 z-50 bg-slate-800 text-white px-5 py-3 rounded-lg shadow-lg text-sm pop-in">
+  <i class="fas fa-check-circle mr-2 text-green-400"></i><span id="toastMsg"></span>
+</div>
+
+<script>
+// ============ DATA STRUCTURE ============
+// { profiles: { id: { id, name, jobTitle, email, avatar, color, createdAt, data: {...} } }, currentId }
+const STORAGE_KEY = 'cvBuilderTeamData';
+
+let store = { profiles: {}, currentId: null };
+let deleteTargetId = null;
+
+const AVATAR_GRADIENTS = ['avatar-gradient','avatar-gradient-2','avatar-gradient-3','avatar-gradient-4','avatar-gradient-5','avatar-gradient-6'];
+
+function uid() { return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+function loadStore() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) store = JSON.parse(s);
+  } catch(e) {}
+  if (!store.profiles) store.profiles = {};
+}
+
+function saveStore() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add('hidden'), 2500);
+}
+
+// ============ VIEW SWITCHING ============
+function showDashboard() {
+  document.getElementById('dashboardView').classList.remove('hidden');
+  document.getElementById('editorView').classList.add('hidden');
+  document.getElementById('btnDashboard').classList.add('bg-blue-600','text-white');
+  document.getElementById('btnDashboard').classList.remove('bg-slate-100','text-slate-700');
+  document.getElementById('btnEditor').classList.add('hidden');
+  renderDashboard();
+}
+
+function showEditor() {
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('editorView').classList.remove('hidden');
+  document.getElementById('btnDashboard').classList.remove('bg-blue-600','text-white');
+  document.getElementById('btnDashboard').classList.add('bg-slate-100','text-slate-700');
+  document.getElementById('btnEditor').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const grid = document.getElementById('profileGrid');
+  const empty = document.getElementById('emptyState');
+  const profiles = Object.values(store.profiles).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  
+  document.getElementById('profileCount').textContent = profiles.length;
+  
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const filtered = q ? profiles.filter(p => 
+    (p.name||'').toLowerCase().includes(q) ||
+    (p.jobTitle||'').toLowerCase().includes(q) ||
+    (p.email||'').toLowerCase().includes(q)
+  ) : profiles;
+  
+  if (profiles.length === 0) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500 text-sm">
+      <i class="fas fa-search text-2xl mb-2 block"></i>Không tìm thấy hồ sơ phù hợp
+    </div>`;
+    return;
+  }
+  
+  grid.innerHTML = filtered.map(p => {
+    const initials = (p.name || '?').split(' ').map(w=>w[0]).slice(-2).join('').toUpperCase();
+    const data = p.data || {};
+    const expCount = (data.experience||[]).length;
+    const skillCount = (data.skills||[]).length;
+    const color = p.color || AVATAR_GRADIENTS[0];
+    const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '';
+    
+    return `
+      <div class="profile-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 pop-in" onclick="openProfile('${p.id}')">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-14 h-14 rounded-full ${color} flex items-center justify-center text-white font-bold text-lg shadow-md">
+            ${p.avatar ? `<img src="${p.avatar}" class="w-full h-full rounded-full object-cover"/>` : initials}
+          </div>
+          <div class="flex gap-1" onclick="event.stopPropagation()">
+            <button onclick="duplicateProfile('${p.id}')" title="Nhân bản" class="w-7 h-7 hover:bg-slate-100 rounded text-slate-500 text-xs">
+              <i class="fas fa-copy"></i>
+            </button>
+            <button onclick="openDeleteModal('${p.id}')" title="Xóa" class="w-7 h-7 hover:bg-red-50 rounded text-red-500 text-xs">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <h3 class="font-bold text-slate-800 truncate">${escapeHtml(p.name || 'Chưa có tên')}</h3>
+        <p class="text-xs text-blue-600 font-medium truncate mb-3">${escapeHtml(p.jobTitle || 'Chưa có chức danh')}</p>
+        <div class="flex items-center gap-3 text-[11px] text-slate-500 mb-2">
+          <span><i class="fas fa-briefcase mr-1"></i>${expCount} KN</span>
+          <span><i class="fas fa-cogs mr-1"></i>${skillCount} KN</span>
+        </div>
+        ${p.email ? `<p class="text-[11px] text-slate-400 truncate"><i class="fas fa-envelope mr-1"></i>${escapeHtml(p.email)}</p>` : ''}
+        ${dateStr ? `<p class="text-[10px] text-slate-400 mt-2"><i class="far fa-clock mr-1"></i>${dateStr}</p>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ PROFILE OPERATIONS ============
+function createNewProfile() {
+  const id = uid();
+  const color = AVATAR_GRADIENTS[Object.keys(store.profiles).length % AVATAR_GRADIENTS.length];
+  store.profiles[id] = {
+    id,
+    name: '',
+    jobTitle: '',
+    email: '',
+    avatar: '',
+    color,
+    createdAt: Date.now(),
+    data: emptyData()
+  };
+  store.currentId = id;
+  saveStore();
+  openProfile(id);
+  showToast('Đã tạo hồ sơ mới');
+}
+
+function emptyData() {
+  return {
+    personal: {},
+    objective: '',
+    experience: [],
+    education: [],
+    skills: [],
+    projects: [],
+    languages: [],
+    certificates: []
+  };
+}
+
+function openProfile(id) {
+  if (!store.profiles[id]) return;
+  store.currentId = id;
+  saveStore();
+  loadProfileToForm();
+  showEditor();
+}
+
+function loadProfileToForm() {
+  const p = store.profiles[store.currentId];
+  if (!p) return;
+  const d = p.data || emptyData();
+  
+  // Update editor header
+  const initials = (p.name || '?').split(' ').map(w=>w[0]).slice(-2).join('').toUpperCase();
+  const av = document.getElementById('editorAvatar');
+  av.className = 'w-12 h-12 rounded-full ' + (p.color || AVATAR_GRADIENTS[0]) + ' flex items-center justify-center text-white font-bold overflow-hidden';
+  av.innerHTML = p.avatar ? `<img src="${p.avatar}" class="w-full h-full object-cover"/>` : initials;
+  document.getElementById('editorName').textContent = p.name || 'Hồ sơ mới';
+  document.getElementById('editorTitle').textContent = p.jobTitle || 'Nhấn để chỉnh sửa';
+  
+  // Fill form
+  document.getElementById('fullName').value = d.personal.fullName || '';
+  document.getElementById('jobTitle').value = d.personal.jobTitle || '';
+  document.getElementById('email').value = d.personal.email || '';
+  document.getElementById('phone').value = d.personal.phone || '';
+  document.getElementById('address').value = d.personal.address || '';
+  document.getElementById('website').value = d.personal.website || '';
+  document.getElementById('dob').value = d.personal.dob || '';
+  document.getElementById('avatarUrl').value = d.personal.avatar || '';
+  document.getElementById('objective').value = d.objective || '';
+  
+  // Assign to current working data
+  currentData = d;
+  renderAll();
+}
+
+let currentData = emptyData();
+
+function saveCurrentData() {
+  if (!store.currentId || !store.profiles[store.currentId]) return;
+  const p = store.profiles[store.currentId];
+  // Sync personal summary fields
+  p.name = currentData.personal.fullName || '';
+  p.jobTitle = currentData.personal.jobTitle || '';
+  p.email = currentData.personal.email || '';
+  p.avatar = currentData.personal.avatar || '';
+  p.data = currentData;
+  saveStore();
+  // Update editor header
+  document.getElementById('editorName').textContent = p.name || 'Hồ sơ mới';
+  document.getElementById('editorTitle').textContent = p.jobTitle || 'Nhấn để chỉnh sửa';
+}
+
+function duplicateProfile(id) {
+  const src = store.profiles[id];
+  if (!src) return;
+  const newId = uid();
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = newId;
+  copy.name = src.name + ' (bản sao)';
+  copy.createdAt = Date.now();
+  store.profiles[newId] = copy;
+  saveStore();
+  renderDashboard();
+  showToast('Đã nhân bản hồ sơ');
+}
+
+function openDeleteModal(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteTargetName').textContent = store.profiles[id]?.name || 'hồ sơ này';
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.add('hidden');
+  deleteTargetId = null;
+}
+function confirmDelete() {
+  if (!deleteTargetId) return;
+  delete store.profiles[deleteTargetId];
+  if (store.currentId === deleteTargetId) store.currentId = null;
+  saveStore();
+  closeDeleteModal();
+  renderDashboard();
+  showToast('Đã xóa hồ sơ');
+}
+
+function exportCurrentProfile() {
+  const p = store.profiles[store.currentId];
+  if (!p) return;
+  const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CV_${(p.name||'profile').replace(/\s+/g,'_')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất file JSON');
+}
+
+function importProfile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.data) { showToast('File không hợp lệ'); return; }
+      const newId = uid();
+      imported.id = newId;
+      imported.createdAt = Date.now();
+      if (!imported.color) imported.color = AVATAR_GRADIENTS[Object.keys(store.profiles).length % AVATAR_GRADIENTS.length];
+      store.profiles[newId] = imported;
+      saveStore();
+      renderDashboard();
+      showToast('Đã nhập hồ sơ thành công');
+    } catch(err) {
+      showToast('Lỗi đọc file JSON');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ============ FORM HANDLERS (same as before, but save to currentData) ============
+function bindPersonalInputs() {
+  const fields = ['fullName','jobTitle','email','phone','address','website','dob','avatarUrl','objective'];
+  fields.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      if (id === 'objective') {
+        currentData.objective = document.getElementById(id).value;
+      } else if (id === 'avatarUrl') {
+        currentData.personal.avatar = document.getElementById(id).value;
+      } else {
+        currentData.personal[id] = document.getElementById(id).value;
+      }
+      saveCurrentData();
+      updateCV();
+    });
+  });
+}
+
+function handleAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('avatarUrl').value = ev.target.result;
+    currentData.personal.avatar = ev.target.result;
+    saveCurrentData();
+    updateCV();
+  };
+  reader.readAsDataURL(file);
+}
+
+// Experience
+function addExperience() {
+  currentData.experience.push({ company: '', position: '', period: '', description: '' });
+  saveCurrentData();
+  renderExperience();
+  updateCV();
+}
+function renderExperience() {
+  document.getElementById('experienceList').innerHTML = currentData.experience.map((exp, i) => `
+    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 fade-in">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input value="${escapeHtml(exp.company)}" oninput="updateExp(${i},'company',this.value)" placeholder="Công ty" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+        <input value="${escapeHtml(exp.position)}" oninput="updateExp(${i},'position',this.value)" placeholder="Vị trí" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+      </div>
+      <input value="${escapeHtml(exp.period)}" oninput="updateExp(${i},'period',this.value)" placeholder="01/2023 - Hiện tại" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white mb-2"/>
+      <textarea oninput="updateExp(${i},'description',this.value)" rows="2" placeholder="Mô tả công việc, thành tựu..." class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white">${escapeHtml(exp.description)}</textarea>
+      <button onclick="removeExp(${i})" class="mt-2 text-xs text-red-500 hover:text-red-700"><i class="fas fa-trash mr-1"></i>Xóa</button>
+    </div>
+  `).join('');
+}
+function updateExp(i, field, val) { currentData.experience[i][field] = val; saveCurrentData(); updateCV(); }
+function removeExp(i) { currentData.experience.splice(i,1); saveCurrentData(); renderExperience(); updateCV(); }
+
+// Education
+function addEducation() {
+  currentData.education.push({ school: '', degree: '', period: '', description: '' });
+  saveCurrentData(); renderEducation(); updateCV();
+}
+function renderEducation() {
+  document.getElementById('educationList').innerHTML = currentData.education.map((ed, i) => `
+    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 fade-in">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input value="${escapeHtml(ed.school)}" oninput="updateEd(${i},'school',this.value)" placeholder="Trường học" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+        <input value="${escapeHtml(ed.degree)}" oninput="updateEd(${i},'degree',this.value)" placeholder="Bằng cấp / Chuyên ngành" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+      </div>
+      <input value="${escapeHtml(ed.period)}" oninput="updateEd(${i},'period',this.value)" placeholder="2019 - 2023" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white mb-2"/>
+      <textarea oninput="updateEd(${i},'description',this.value)" rows="2" placeholder="GPA, thành tích..." class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white">${escapeHtml(ed.description)}</textarea>
+      <button onclick="removeEd(${i})" class="mt-2 text-xs text-red-500 hover:text-red-700"><i class="fas fa-trash mr-1"></i>Xóa</button>
+    </div>
+  `).join('');
+}
+function updateEd(i, field, val) { currentData.education[i][field] = val; saveCurrentData(); updateCV(); }
+function removeEd(i) { currentData.education.splice(i,1); saveCurrentData(); renderEducation(); updateCV(); }
+
+// Skills
+function addSkill() {
+  currentData.skills.push({ name: '', level: 80 });
+  saveCurrentData(); renderSkills(); updateCV();
+}
+function renderSkills() {
+  document.getElementById('skillList').innerHTML = currentData.skills.map((sk, i) => `
+    <div class="flex items-center gap-2 fade-in">
+      <input value="${escapeHtml(sk.name)}" oninput="updateSkill(${i},'name',this.value)" placeholder="Kỹ năng" class="flex-1 px-2 py-1.5 border border-slate-200 rounded text-sm"/>
+      <input type="range" min="0" max="100" value="${sk.level}" oninput="updateSkill(${i},'level',parseInt(this.value))" class="flex-1"/>
+      <span class="text-xs text-slate-500 w-8">${sk.level}%</span>
+      <button onclick="removeSkill(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+    </div>
+  `).join('');
+}
+function updateSkill(i, field, val) { currentData.skills[i][field] = val; saveCurrentData(); renderSkills(); updateCV(); }
+function removeSkill(i) { currentData.skills.splice(i,1); saveCurrentData(); renderSkills(); updateCV(); }
+
+// Projects
+function addProject() {
+  currentData.projects.push({ name: '', role: '', period: '', description: '' });
+  saveCurrentData(); renderProjects(); updateCV();
+}
+function renderProjects() {
+  document.getElementById('projectList').innerHTML = currentData.projects.map((p, i) => `
+    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 fade-in">
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input value="${escapeHtml(p.name)}" oninput="updateProj(${i},'name',this.value)" placeholder="Tên dự án" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+        <input value="${escapeHtml(p.role)}" oninput="updateProj(${i},'role',this.value)" placeholder="Vai trò" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
+      </div>
+      <input value="${escapeHtml(p.period)}" oninput="updateProj(${i},'period',this.value)" placeholder="Thời gian" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white mb-2"/>
+      <textarea oninput="updateProj(${i},'description',this.value)" rows="2" placeholder="Mô tả..." class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white">${escapeHtml(p.description)}</textarea>
+      <button onclick="removeProj(${i})" class="mt-2 text-xs text-red-500 hover:text-red-700"><i class="fas fa-trash mr-1"></i>Xóa</button>
+    </div>
+  `).join('');
+}
+function updateProj(i, field, val) { currentData.projects[i][field] = val; saveCurrentData(); updateCV(); }
+function removeProj(i) { currentData.projects.splice(i,1); saveCurrentData(); renderProjects(); updateCV(); }
+
+// Languages
+function addLanguage() {
+  currentData.languages.push({ name: '', level: 'Trung bình' });
+  saveCurrentData(); renderLanguages(); updateCV();
+}
+function renderLanguages() {
+  document.getElementById('languageList').innerHTML = currentData.languages.map((l, i) => `
+    <div class="flex items-center gap-2 fade-in">
+      <input value="${escapeHtml(l.name)}" oninput="updateLang(${i},'name',this.value)" placeholder="Ngôn ngữ" class="flex-1 px-2 py-1.5 border border-slate-200 rounded text-sm"/>
+      <select onchange="updateLang(${i},'level',this.value)" class="px-2 py-1.5 border border-slate-200 rounded text-sm">
+        <option ${l.level==='Sơ cấp'?'selected':''}>Sơ cấp</option>
+        <option ${l.level==='Trung bình'?'selected':''}>Trung bình</option>
+        <option ${l.level==='Khá'?'selected':''}>Khá</option>
+        <option ${l.level==='Tốt'?'selected':''}>Tốt</option>
+        <option ${l.level==='Thành thạo'?'selected':''}>Thành thạo</option>
+        <option ${l.level==='Bản ngữ'?'selected':''}>Bản ngữ</option>
+      </select>
+      <button onclick="removeLang(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+    </div>
+  `).join('');
+}
+function updateLang(i, field, val) { currentData.languages[i][field] = val; saveCurrentData(); renderLanguages(); updateCV(); }
+function removeLang(i) { currentData.languages.splice(i,1); saveCurrentData(); renderLanguages(); updateCV(); }
+
+// Certificates
+function addCertificate() {
+  currentData.certificates.push({ name: '', year: '' });
+  saveCurrentData(); renderCertificates(); updateCV();
+}
+function renderCertificates() {
+  document.getElementById('certificateList').innerHTML = currentData.certificates.map((c, i) => `
+    <div class="flex items-center gap-2 fade-in">
+      <input value="${escapeHtml(c.name)}" oninput="updateCert(${i},'name',this.value)" placeholder="Tên chứng chỉ" class="flex-1 px-2 py-1.5 border border-slate-200 rounded text-sm"/>
+      <input value="${escapeHtml(c.year)}" oninput="updateCert(${i},'year',this.value)" placeholder="Năm" class="w-24 px-2 py-1.5 border border-slate-200 rounded text-sm"/>
+      <button onclick="removeCert(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+    </div>
+  `).join('');
+}
+function updateCert(i, field, val) { currentData.certificates[i][field] = val; saveCurrentData(); renderCertificates(); updateCV(); }
+function removeCert(i) { currentData.certificates.splice(i,1); saveCurrentData(); renderCertificates(); updateCV(); }
+
+// ============ CV PREVIEW ============
+function updateCV() {
+  const p = currentData.personal;
+  document.getElementById('cvName').textContent = p.fullName || 'Họ và tên';
+  document.getElementById('cvTitle').textContent = p.jobTitle || 'Chức danh';
+  
+  const avatarEl = document.getElementById('cvAvatar');
+  if (p.avatar) {
+    avatarEl.innerHTML = `<img src="${p.avatar}" class="w-full h-full object-cover"/>`;
+  } else {
+    const initials = (p.fullName || 'U').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+    avatarEl.innerHTML = `<span class="text-3xl font-bold">${initials}</span>`;
+  }
+  
+  document.getElementById('cvEmail').querySelector('span').textContent = p.email || 'email@example.com';
+  document.getElementById('cvPhone').querySelector('span').textContent = p.phone || '0123 456 789';
+  document.getElementById('cvAddress').querySelector('span').textContent = p.address || 'Địa chỉ';
+  
+  const websiteEl = document.getElementById('cvWebsite');
+  if (p.website) { websiteEl.classList.remove('hidden'); websiteEl.querySelector('span').textContent = p.website; }
+  else websiteEl.classList.add('hidden');
+  
+  const dobEl = document.getElementById('cvDob');
+  if (p.dob) {
+    dobEl.classList.remove('hidden');
+    const d = new Date(p.dob);
+    dobEl.querySelector('span').textContent = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  } else dobEl.classList.add('hidden');
+  
+  const objSec = document.getElementById('cvObjectiveSection');
+  if (currentData.objective) { objSec.classList.remove('hidden'); document.getElementById('cvObjective').textContent = currentData.objective; }
+  else objSec.classList.add('hidden');
+  
+  const expSec = document.getElementById('cvExperienceSection');
+  if (currentData.experience.length) {
+    expSec.classList.remove('hidden');
+    document.getElementById('cvExperience').innerHTML = currentData.experience.map(e => `
+      <div class="cv-item">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="cv-item-title">${escapeHtml(e.position || 'Vị trí')}</div>
+            <div class="cv-item-sub">${escapeHtml(e.company || 'Công ty')}</div>
+          </div>
+          <span class="text-[10px] text-blue-600 font-semibold whitespace-nowrap">${escapeHtml(e.period || '')}</span>
+        </div>
+        ${e.description ? `<div class="cv-item-desc whitespace-pre-line">${escapeHtml(e.description)}</div>` : ''}
+      </div>
+    `).join('');
+  } else expSec.classList.add('hidden');
+  
+  const edSec = document.getElementById('cvEducationSection');
+  if (currentData.education.length) {
+    edSec.classList.remove('hidden');
+    document.getElementById('cvEducation').innerHTML = currentData.education.map(e => `
+      <div class="cv-item">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="cv-item-title">${escapeHtml(e.degree || 'Bằng cấp')}</div>
+            <div class="cv-item-sub">${escapeHtml(e.school || 'Trường')}</div>
+          </div>
+          <span class="text-[10px] text-blue-600 font-semibold whitespace-nowrap">${escapeHtml(e.period || '')}</span>
+        </div>
+        ${e.description ? `<div class="cv-item-desc whitespace-pre-line">${escapeHtml(e.description)}</div>` : ''}
+      </div>
+    `).join('');
+  } else edSec.classList.add('hidden');
+  
+  const projSec = document.getElementById('cvProjectsSection');
+  if (currentData.projects.length) {
+    projSec.classList.remove('hidden');
+    document.getElementById('cvProjects').innerHTML = currentData.projects.map(p => `
+      <div class="cv-item">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="cv-item-title">${escapeHtml(p.name || 'Dự án')}</div>
+            <div class="cv-item-sub">${escapeHtml(p.role || '')}</div>
+          </div>
+          <span class="text-[10px] text-blue-600 font-semibold whitespace-nowrap">${escapeHtml(p.period || '')}</span>
+        </div>
+        ${p.description ? `<div class="cv-item-desc whitespace-pre-line">${escapeHtml(p.description)}</div>` : ''}
+      </div>
+    `).join('');
+  } else projSec.classList.add('hidden');
+  
+  document.getElementById('cvSkills').innerHTML = currentData.skills.length ? currentData.skills.map(s => `
+    <div>
+      <div class="flex justify-between text-[11px] mb-1"><span>${escapeHtml(s.name)}</span><span class="opacity-70">${s.level}%</span></div>
+      <div class="skill-bar"><div class="skill-bar-fill" style="width:${s.level}%"></div></div>
+    </div>
+  `).join('') : '<p class="text-xs opacity-60 italic">Chưa có kỹ năng</p>';
+  
+  document.getElementById('cvLanguages').innerHTML = currentData.languages.length ? currentData.languages.map(l => `
+    <div class="flex justify-between"><span>${escapeHtml(l.name)}</span><span class="opacity-70">${escapeHtml(l.level)}</span></div>
+  `).join('') : '<p class="opacity-60 italic">Chưa có</p>';
+  
+  document.getElementById('cvCertificates').innerHTML = currentData.certificates.length ? currentData.certificates.map(c => `
+    <div>
+      <div class="font-semibold text-[11px]">${escapeHtml(c.name)}</div>
+      ${c.year ? `<div class="opacity-70 text-[10px]">${escapeHtml(c.year)}</div>` : ''}
+    </div>
+  `).join('') : '<p class="opacity-60 italic">Chưa có</p>';
+}
+
+function renderAll() {
+  renderExperience();
+  renderEducation();
+  renderSkills();
+  renderProjects();
+  renderLanguages();
+  renderCertificates();
+  updateCV();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ============ SAMPLE DATA ============
+function loadSample() {
+  currentData = {
+    personal: {
+      fullName: 'Nguyễn Văn An',
+      jobTitle: 'Senior Frontend Developer',
+      email: 'nguyenvanan@email.com',
+      phone: '0912 345 678',
+      address: 'Quận Cầu Giấy, Hà Nội',
+      website: 'linkedin.com/in/nguyenvanan',
+      dob: '1995-06-15',
+      avatar: ''
+    },
+    objective: 'Frontend Developer với 5 năm kinh nghiệm, đam mê xây dựng các sản phẩm web hiện đại, tối ưu hiệu năng và trải nghiệm người dùng.',
+    experience: [
+      { company: 'FPT Software', position: 'Senior Frontend Developer', period: '01/2022 - Hiện tại',
+        description: '• Dẫn dắt team 5 người phát triển hệ thống e-commerce\n• Tối ưu performance, giảm 40% thời gian load trang\n• Xây dựng design system dùng chung' },
+      { company: 'Tiki Corporation', position: 'Frontend Developer', period: '06/2019 - 12/2021',
+        description: '• Phát triển tính năng checkout, payment\n• Tích hợp các cổng thanh toán: MoMo, VNPay\n• Mentor cho 2 junior developers' }
+    ],
+    education: [
+      { school: 'Đại học Bách Khoa Hà Nội', degree: 'Kỹ sư Công nghệ Thông tin', period: '2013 - 2018',
+        description: 'GPA: 3.4/4.0 • Giải nhất cuộc thi lập trình sinh viên 2017' }
+    ],
+    skills: [
+      { name: 'React / Next.js', level: 95 },
+      { name: 'TypeScript', level: 90 },
+      { name: 'HTML / CSS / Tailwind', level: 95 },
+      { name: 'Node.js', level: 75 },
+      { name: 'Git / CI-CD', level: 85 }
+    ],
+    projects: [
+      { name: 'E-commerce Platform', role: 'Tech Lead', period: '2023 - 2024',
+        description: 'Xây dựng platform bán hàng với 500K+ sản phẩm. Next.js, Redux, GraphQL.' },
+      { name: 'Design System Library', role: 'Core Developer', period: '2022 - 2023',
+        description: 'Phát triển bộ component dùng chung cho 10+ dự án nội bộ.' }
+    ],
+    languages: [
+      { name: 'Tiếng Việt', level: 'Bản ngữ' },
+      { name: 'Tiếng Anh', level: 'Thành thạo' },
+      { name: 'Tiếng Nhật', level: 'Trung bình' }
+    ],
+    certificates: [
+      { name: 'AWS Certified Developer', year: '2023' },
+      { name: 'IELTS 7.5', year: '2020' }
+    ]
+  };
+  
+  document.getElementById('fullName').value = currentData.personal.fullName;
+  document.getElementById('jobTitle').value = currentData.personal.jobTitle;
+  document.getElementById('email').value = currentData.personal.email;
+  document.getElementById('phone').value = currentData.personal.phone;
+  document.getElementById('address').value = currentData.personal.address;
+  document.getElementById('website').value = currentData.personal.website;
+  document.getElementById('dob').value = currentData.personal.dob;
+  document.getElementById('objective').value = currentData.objective;
+  
+  saveCurrentData();
+  renderAll();
+  showToast('Đã tải dữ liệu mẫu');
+}
+
+// ============ INIT ============
+loadStore();
+bindPersonalInputs();
+
+// If there's a current profile, open it; else show dashboard
+if (store.currentId && store.profiles[store.currentId]) {
+  loadProfileToForm();
+  showEditor();
+} else {
+  showDashboard();
+}
+</script>
+
+</body>
+</html>
