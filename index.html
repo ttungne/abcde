@@ -27,6 +27,19 @@
   .cv-item-sub { font-size: 11px; color: #64748b; font-style: italic; }
   .cv-item-desc { font-size: 11px; color: #475569; margin-top: 4px; line-height: 1.5; }
   
+  /* Project image in CV */
+  .cv-project-with-img { display: flex; gap: 10px; align-items: flex-start; }
+  .cv-project-img {
+    width: 90px;
+    height: 64px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .cv-project-content { flex: 1; min-width: 0; }
+  
   @media print {
     body * { visibility: hidden; }
     #cvPreview, #cvPreview * { visibility: visible; }
@@ -45,19 +58,50 @@
   .profile-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
   .profile-card.active { ring: 2px; border-color: #3b82f6; }
   
-  .avatar-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
+  .avatar-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
   .avatar-gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
   .avatar-gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
   .avatar-gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
   .avatar-gradient-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
   .avatar-gradient-6 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
   
-  .modal-backdrop {
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
+  .modal-backdrop { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+  
+  /* Project image preview in form */
+  .proj-img-preview {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border: 1px dashed #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
   }
+  .proj-img-preview:hover { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+  .proj-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .proj-img-preview .remove-img {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .proj-img-preview:hover .remove-img { opacity: 1; }
 </style>
 </head>
 <body class="bg-slate-100">
@@ -114,9 +158,7 @@
   </div>
 
   <!-- Profile Grid -->
-  <div id="profileGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    <!-- filled by JS -->
-  </div>
+  <div id="profileGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
 
   <!-- Empty State -->
   <div id="emptyState" class="hidden text-center py-16">
@@ -363,7 +405,7 @@
 
               <div id="cvProjectsSection" class="mb-5 hidden">
                 <h3><i class="fas fa-project-diagram mr-1"></i> Dự án nổi bật</h3>
-                <div id="cvProjects" class="space-y-1"></div>
+                <div id="cvProjects" class="space-y-3"></div>
               </div>
 
             </div>
@@ -407,11 +449,11 @@
 
 <script>
 // ============ DATA STRUCTURE ============
-// { profiles: { id: { id, name, jobTitle, email, avatar, color, createdAt, data: {...} } }, currentId }
 const STORAGE_KEY = 'cvBuilderTeamData';
 
 let store = { profiles: {}, currentId: null };
 let deleteTargetId = null;
+let currentData = emptyData();
 
 const AVATAR_GRADIENTS = ['avatar-gradient','avatar-gradient-2','avatar-gradient-3','avatar-gradient-4','avatar-gradient-5','avatar-gradient-6'];
 
@@ -435,6 +477,19 @@ function showToast(msg) {
   t.classList.remove('hidden');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.add('hidden'), 2500);
+}
+
+function emptyData() {
+  return {
+    personal: {},
+    objective: '',
+    experience: [],
+    education: [],
+    skills: [],
+    projects: [],
+    languages: [],
+    certificates: []
+  };
 }
 
 // ============ VIEW SWITCHING ============
@@ -496,8 +551,8 @@ function renderDashboard() {
     return `
       <div class="profile-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 pop-in" onclick="openProfile('${p.id}')">
         <div class="flex items-start justify-between mb-3">
-          <div class="w-14 h-14 rounded-full ${color} flex items-center justify-center text-white font-bold text-lg shadow-md">
-            ${p.avatar ? `<img src="${p.avatar}" class="w-full h-full rounded-full object-cover"/>` : initials}
+          <div class="w-14 h-14 rounded-full ${color} flex items-center justify-center text-white font-bold text-lg shadow-md overflow-hidden">
+            ${p.avatar ? `<img src="${p.avatar}" class="w-full h-full object-cover"/>` : initials}
           </div>
           <div class="flex gap-1" onclick="event.stopPropagation()">
             <button onclick="duplicateProfile('${p.id}')" title="Nhân bản" class="w-7 h-7 hover:bg-slate-100 rounded text-slate-500 text-xs">
@@ -526,12 +581,7 @@ function createNewProfile() {
   const id = uid();
   const color = AVATAR_GRADIENTS[Object.keys(store.profiles).length % AVATAR_GRADIENTS.length];
   store.profiles[id] = {
-    id,
-    name: '',
-    jobTitle: '',
-    email: '',
-    avatar: '',
-    color,
+    id, name: '', jobTitle: '', email: '', avatar: '', color,
     createdAt: Date.now(),
     data: emptyData()
   };
@@ -539,19 +589,6 @@ function createNewProfile() {
   saveStore();
   openProfile(id);
   showToast('Đã tạo hồ sơ mới');
-}
-
-function emptyData() {
-  return {
-    personal: {},
-    objective: '',
-    experience: [],
-    education: [],
-    skills: [],
-    projects: [],
-    languages: [],
-    certificates: []
-  };
 }
 
 function openProfile(id) {
@@ -567,7 +604,6 @@ function loadProfileToForm() {
   if (!p) return;
   const d = p.data || emptyData();
   
-  // Update editor header
   const initials = (p.name || '?').split(' ').map(w=>w[0]).slice(-2).join('').toUpperCase();
   const av = document.getElementById('editorAvatar');
   av.className = 'w-12 h-12 rounded-full ' + (p.color || AVATAR_GRADIENTS[0]) + ' flex items-center justify-center text-white font-bold overflow-hidden';
@@ -575,7 +611,6 @@ function loadProfileToForm() {
   document.getElementById('editorName').textContent = p.name || 'Hồ sơ mới';
   document.getElementById('editorTitle').textContent = p.jobTitle || 'Nhấn để chỉnh sửa';
   
-  // Fill form
   document.getElementById('fullName').value = d.personal.fullName || '';
   document.getElementById('jobTitle').value = d.personal.jobTitle || '';
   document.getElementById('email').value = d.personal.email || '';
@@ -586,24 +621,19 @@ function loadProfileToForm() {
   document.getElementById('avatarUrl').value = d.personal.avatar || '';
   document.getElementById('objective').value = d.objective || '';
   
-  // Assign to current working data
   currentData = d;
   renderAll();
 }
 
-let currentData = emptyData();
-
 function saveCurrentData() {
   if (!store.currentId || !store.profiles[store.currentId]) return;
   const p = store.profiles[store.currentId];
-  // Sync personal summary fields
   p.name = currentData.personal.fullName || '';
   p.jobTitle = currentData.personal.jobTitle || '';
   p.email = currentData.personal.email || '';
   p.avatar = currentData.personal.avatar || '';
   p.data = currentData;
   saveStore();
-  // Update editor header
   document.getElementById('editorName').textContent = p.name || 'Hồ sơ mới';
   document.getElementById('editorTitle').textContent = p.jobTitle || 'Nhấn để chỉnh sửa';
 }
@@ -678,18 +708,14 @@ function importProfile(e) {
   e.target.value = '';
 }
 
-// ============ FORM HANDLERS (same as before, but save to currentData) ============
+// ============ FORM HANDLERS ============
 function bindPersonalInputs() {
   const fields = ['fullName','jobTitle','email','phone','address','website','dob','avatarUrl','objective'];
   fields.forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
-      if (id === 'objective') {
-        currentData.objective = document.getElementById(id).value;
-      } else if (id === 'avatarUrl') {
-        currentData.personal.avatar = document.getElementById(id).value;
-      } else {
-        currentData.personal[id] = document.getElementById(id).value;
-      }
+      if (id === 'objective') currentData.objective = document.getElementById(id).value;
+      else if (id === 'avatarUrl') currentData.personal.avatar = document.getElementById(id).value;
+      else currentData.personal[id] = document.getElementById(id).value;
       saveCurrentData();
       updateCV();
     });
@@ -712,9 +738,7 @@ function handleAvatar(e) {
 // Experience
 function addExperience() {
   currentData.experience.push({ company: '', position: '', period: '', description: '' });
-  saveCurrentData();
-  renderExperience();
-  updateCV();
+  saveCurrentData(); renderExperience(); updateCV();
 }
 function renderExperience() {
   document.getElementById('experienceList').innerHTML = currentData.experience.map((exp, i) => `
@@ -771,25 +795,77 @@ function renderSkills() {
 function updateSkill(i, field, val) { currentData.skills[i][field] = val; saveCurrentData(); renderSkills(); updateCV(); }
 function removeSkill(i) { currentData.skills.splice(i,1); saveCurrentData(); renderSkills(); updateCV(); }
 
-// Projects
+// ============ PROJECTS (WITH IMAGE SUPPORT) ============
 function addProject() {
-  currentData.projects.push({ name: '', role: '', period: '', description: '' });
+  currentData.projects.push({ name: '', role: '', period: '', description: '', image: '' });
   saveCurrentData(); renderProjects(); updateCV();
 }
+
 function renderProjects() {
   document.getElementById('projectList').innerHTML = currentData.projects.map((p, i) => `
     <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 fade-in">
+      <!-- Image upload area -->
+      <div class="mb-3">
+        <label class="text-[11px] font-medium text-slate-600 mb-1.5 block">
+          <i class="fas fa-image mr-1 text-blue-500"></i>Ảnh minh họa dự án
+        </label>
+        <div class="proj-img-preview" onclick="triggerProjImgUpload(${i})">
+          ${p.image 
+            ? `<img src="${p.image}" alt="preview"/>
+               <div class="remove-img" onclick="event.stopPropagation(); removeProjImage(${i})" title="Xóa ảnh">
+                 <i class="fas fa-times"></i>
+               </div>` 
+            : `<div class="text-center text-slate-400">
+                 <i class="fas fa-cloud-upload-alt text-2xl mb-1"></i>
+                 <p class="text-[11px]">Nhấn để tải ảnh lên</p>
+               </div>`}
+        </div>
+        <input type="file" id="projImgInput_${i}" accept="image/*" onchange="handleProjImage(event, ${i})" class="hidden"/>
+        <input value="${escapeHtml(p.image)}" oninput="updateProj(${i},'image',this.value)" placeholder="Hoặc dán URL ảnh tại đây" class="w-full mt-2 px-2 py-1.5 border border-slate-200 rounded text-xs bg-white"/>
+      </div>
+      
       <div class="grid grid-cols-2 gap-2 mb-2">
         <input value="${escapeHtml(p.name)}" oninput="updateProj(${i},'name',this.value)" placeholder="Tên dự án" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
         <input value="${escapeHtml(p.role)}" oninput="updateProj(${i},'role',this.value)" placeholder="Vai trò" class="px-2 py-1.5 border border-slate-200 rounded text-sm bg-white"/>
       </div>
       <input value="${escapeHtml(p.period)}" oninput="updateProj(${i},'period',this.value)" placeholder="Thời gian" class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white mb-2"/>
-      <textarea oninput="updateProj(${i},'description',this.value)" rows="2" placeholder="Mô tả..." class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white">${escapeHtml(p.description)}</textarea>
+      <textarea oninput="updateProj(${i},'description',this.value)" rows="2" placeholder="Mô tả, công nghệ sử dụng, kết quả..." class="w-full px-2 py-1.5 border border-slate-200 rounded text-sm bg-white">${escapeHtml(p.description)}</textarea>
       <button onclick="removeProj(${i})" class="mt-2 text-xs text-red-500 hover:text-red-700"><i class="fas fa-trash mr-1"></i>Xóa</button>
     </div>
   `).join('');
 }
-function updateProj(i, field, val) { currentData.projects[i][field] = val; saveCurrentData(); updateCV(); }
+
+function triggerProjImgUpload(i) {
+  document.getElementById('projImgInput_' + i).click();
+}
+
+function handleProjImage(e, i) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    currentData.projects[i].image = ev.target.result;
+    saveCurrentData();
+    renderProjects();
+    updateCV();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProjImage(i) {
+  currentData.projects[i].image = '';
+  saveCurrentData();
+  renderProjects();
+  updateCV();
+}
+
+function updateProj(i, field, val) {
+  currentData.projects[i][field] = val;
+  saveCurrentData();
+  updateCV();
+  // Re-render only if image changed via URL input (to update preview)
+  if (field === 'image') renderProjects();
+}
 function removeProj(i) { currentData.projects.splice(i,1); saveCurrentData(); renderProjects(); updateCV(); }
 
 // Languages
@@ -900,21 +976,32 @@ function updateCV() {
     `).join('');
   } else edSec.classList.add('hidden');
   
+  // Projects with image
   const projSec = document.getElementById('cvProjectsSection');
   if (currentData.projects.length) {
     projSec.classList.remove('hidden');
-    document.getElementById('cvProjects').innerHTML = currentData.projects.map(p => `
-      <div class="cv-item">
-        <div class="flex justify-between items-start">
-          <div>
-            <div class="cv-item-title">${escapeHtml(p.name || 'Dự án')}</div>
-            <div class="cv-item-sub">${escapeHtml(p.role || '')}</div>
+    document.getElementById('cvProjects').innerHTML = currentData.projects.map(p => {
+      const hasImg = p.image && p.image.trim() !== '';
+      const contentHtml = `
+        <div class="cv-project-content">
+          <div class="flex justify-between items-start gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="cv-item-title">${escapeHtml(p.name || 'Dự án')}</div>
+              <div class="cv-item-sub">${escapeHtml(p.role || '')}</div>
+            </div>
+            <span class="text-[10px] text-blue-600 font-semibold whitespace-nowrap">${escapeHtml(p.period || '')}</span>
           </div>
-          <span class="text-[10px] text-blue-600 font-semibold whitespace-nowrap">${escapeHtml(p.period || '')}</span>
+          ${p.description ? `<div class="cv-item-desc whitespace-pre-line">${escapeHtml(p.description)}</div>` : ''}
         </div>
-        ${p.description ? `<div class="cv-item-desc whitespace-pre-line">${escapeHtml(p.description)}</div>` : ''}
-      </div>
-    `).join('');
+      `;
+      if (hasImg) {
+        return `<div class="cv-item"><div class="cv-project-with-img">
+          <img src="${p.image}" class="cv-project-img" alt="${escapeHtml(p.name || '')}" onerror="this.style.display='none'"/>
+          ${contentHtml}
+        </div></div>`;
+      }
+      return `<div class="cv-item">${contentHtml}</div>`;
+    }).join('');
   } else projSec.classList.add('hidden');
   
   document.getElementById('cvSkills').innerHTML = currentData.skills.length ? currentData.skills.map(s => `
@@ -983,9 +1070,9 @@ function loadSample() {
       { name: 'Git / CI-CD', level: 85 }
     ],
     projects: [
-      { name: 'E-commerce Platform', role: 'Tech Lead', period: '2023 - 2024',
+      { name: 'E-commerce Platform', role: 'Tech Lead', period: '2023 - 2024', image: '',
         description: 'Xây dựng platform bán hàng với 500K+ sản phẩm. Next.js, Redux, GraphQL.' },
-      { name: 'Design System Library', role: 'Core Developer', period: '2022 - 2023',
+      { name: 'Design System Library', role: 'Core Developer', period: '2022 - 2023', image: '',
         description: 'Phát triển bộ component dùng chung cho 10+ dự án nội bộ.' }
     ],
     languages: [
@@ -1017,7 +1104,6 @@ function loadSample() {
 loadStore();
 bindPersonalInputs();
 
-// If there's a current profile, open it; else show dashboard
 if (store.currentId && store.profiles[store.currentId]) {
   loadProfileToForm();
   showEditor();
